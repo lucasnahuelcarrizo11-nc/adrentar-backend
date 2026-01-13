@@ -55,5 +55,7 @@ public class PropietarioServiceImpl implements PropietarioService {
         Propietario propietarioActual = propietarioRepository.findById(idPropietario).orElseThrow(()-> new Exception("Id No encontrado"));
         propietarioRepository.deleteById(idPropietario);
 
+
+
     }
 }
