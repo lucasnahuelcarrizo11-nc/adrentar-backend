@@ -60,18 +60,15 @@ public class PropiedadController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Propiedad no encontrada"));
     }
 
-    // 🔹 Actualizar propiedad
     @PutMapping("/{idPropiedad}")
     public ResponseEntity<?> actualizarPropiedad(
             @PathVariable Long idPropiedad,
             @RequestBody Propiedad propiedad) {
 
-        try {
-            Propiedad actualizada = propiedadService.actualizarPropiedad(idPropiedad, propiedad);
-            return ResponseEntity.ok(actualizada);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Propiedad no encontrada");
-        }
+        Propiedad actualizada =
+                propiedadService.actualizarPropiedad(idPropiedad, propiedad);
+
+        return ResponseEntity.ok(actualizada);
     }
 
     // 🔹 Listar propiedades del propietario logueado

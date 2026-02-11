@@ -4,7 +4,9 @@ import com.example.adrentar.entity.Propiedad;
 import com.example.adrentar.repository.PropiedadRepository;
 import com.example.adrentar.service.PropiedadService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +23,13 @@ private PropiedadRepository propiedadRepository;
 
     @Override
     public Propiedad crearPropiedad(Propiedad propiedad) {
-        if (propiedadRepository.existsByDireccion(propiedad.getDireccion())){
-            throw new IllegalArgumentException("La direccion ya existe");
+        if (propiedadRepository.existsByDireccion(propiedad.getDireccion())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La dirección ya existe"
+            );
         }
-        Propiedad propiedad1= propiedadRepository.save(propiedad);
-        return propiedad1;
+        return propiedadRepository.save(propiedad);
     }
 
     @Override
@@ -45,22 +49,31 @@ private PropiedadRepository propiedadRepository;
 
     @Override
     public Propiedad actualizarPropiedad(Long idPropiedad, Propiedad propiedad) {
-        Optional<Propiedad> encontrada = propiedadRepository.findById(idPropiedad);
-        if (!encontrada.isPresent()) {
-            throw new IllegalArgumentException("Propiedad no encontrada");
+        Propiedad existente = propiedadRepository.findById(idPropiedad)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Propiedad no encontrada"
+                ));
+
+        if (propiedadRepository.existsByDireccionIgnoreCaseAndIdPropiedadNot(
+                propiedad.getDireccion(),
+                idPropiedad)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La dirección ya existe"
+            );
         }
 
-        Propiedad propiedad1 = encontrada.get();
-        propiedad1.setDireccion(propiedad.getDireccion());
-        propiedad1.setEstado(propiedad.getEstado());
-        propiedad1.setAmbientes(propiedad.getAmbientes());
-        propiedad1.setLatitud(propiedad.getLatitud());
-        propiedad1.setLongitud(propiedad.getLongitud());
+        // ✅ Actualizar campos
+        existente.setDireccion(propiedad.getDireccion());
+        existente.setEstado(propiedad.getEstado());
+        existente.setAmbientes(propiedad.getAmbientes());
+        existente.setLatitud(propiedad.getLatitud());
+        existente.setLongitud(propiedad.getLongitud());
 
-        // ✅ No tocar el propietario al actualizar, se mantiene la relación actual
-        return propiedadRepository.save(propiedad1);
+        return propiedadRepository.save(existente);
     }
-
 
     @Override
     public void eliminarPropiedad(Long idPropiedad) {

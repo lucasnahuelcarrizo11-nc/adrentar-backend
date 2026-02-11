@@ -16,5 +16,12 @@ public interface PropiedadRepository extends JpaRepository<Propiedad, Long> {
 
     boolean existsByDireccion(String direccion);
 
+    boolean existsByDireccionIgnoreCase(String direccion);
+
+    boolean existsByDireccionIgnoreCaseAndIdPropiedadNot(
+            String direccion,
+            Long idPropiedad
+    );
+
     List<Propiedad> findByPropietarioIdUsuario(Long idUsuario);
 }
