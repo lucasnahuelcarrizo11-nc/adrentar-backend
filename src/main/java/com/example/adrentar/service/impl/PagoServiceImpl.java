@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -45,42 +46,71 @@ public class PagoServiceImpl implements PagoService {
             throw new RuntimeException("El alquiler no está aceptado");
         }
 
-        if (pagoRepository.existsByAlquilerAndMesAndAnio(alquiler, mes, anio)) {
-            throw new RuntimeException("Ese mes ya fue pagado");
+        // 🔥 BUSCAR SI YA EXISTE
+        Pago pagoExistente = pagoRepository
+                .findByAlquilerAndMesAndAnio(alquiler, mes, anio);
+
+        if (pagoExistente != null) {
+
+            if (pagoExistente.getEstadoPago() == EstadoPago.APROBADO) {
+                throw new RuntimeException("Ese mes ya fue pagado");
+            }
+
+            // Si está pendiente o rechazado, reutilizamos la misma preference
+            return "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id="
+                    + pagoExistente.getPreferenceId();
         }
+
+        // 🔥 SI NO EXISTE, CREAR NUEVO PAGO
 
         BigDecimal monto = BigDecimal.valueOf(alquiler.getPrecio());
 
-        String externalReference = idAlquiler + "-" + mes + "-" + anio; // 🔥 CLAVE
+        String externalReference = idAlquiler + "-" + mes + "-" + anio;
 
         PreferenceItemRequest item = PreferenceItemRequest.builder()
-                .title("Alquiler " + mes + "/" + anio)
+                .title("Alquiler - direccion " + alquiler.getPropiedad().getDireccion())
+                .description("Pago correspondiente a " + mes + "/" + anio)
                 .quantity(1)
+                .currencyId("ARS")
                 .unitPrice(monto)
                 .build();
 
         PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                 .items(List.of(item))
                 .externalReference(externalReference)
+                .statementDescriptor("ADRENTAR")
+                .notificationUrl("https://adrentar-backend.onrender.com/api/pagos/webhook")
                 .build();
 
-        Preference preference = new PreferenceClient().create(preferenceRequest);
+        Preference preference;
+
+        try {
+            preference = new PreferenceClient().create(preferenceRequest);
+        } catch (MPApiException e) {
+
+            System.out.println("❌ ERROR MERCADO PAGO");
+            System.out.println("STATUS CODE: " + e.getStatusCode());
+            System.out.println("RESPONSE BODY: " + e.getApiResponse().getContent());
+
+            throw e;
+        }
 
         Pago pago = new Pago();
+
+
         pago.setAlquiler(alquiler);
         pago.setMes(mes);
         pago.setAnio(anio);
         pago.setMonto(alquiler.getPrecio());
         pago.setEstadoPago(EstadoPago.PENDIENTE);
         pago.setPreferenceId(preference.getId());
-        pago.setExternalReference(externalReference); // ✅ AGREGADO
+        pago.setExternalReference(externalReference);
         pago.setFechaCreacion(new Date());
 
         pagoRepository.save(pago);
 
         return preference.getInitPoint();
     }
-
     public List<PagoDto> obtenerPagosPorAlquiler(Long idAlquiler) {
         return pagoRepository.findByAlquilerIdAlquiler(idAlquiler)
                 .stream()
@@ -121,6 +151,37 @@ public class PagoServiceImpl implements PagoService {
 
         } catch (Exception e) {
             throw new RuntimeException("Error procesando webhook MP", e);
+        }
+    }
+
+    public void procesarPago(Long paymentId) throws Exception {
+
+        PaymentClient client = new PaymentClient();
+        Payment payment = client.get(paymentId);
+
+        String externalReference = payment.getExternalReference();
+        String status = payment.getStatus();
+
+        System.out.println("Pago recibido: " + externalReference + " - " + status);
+
+        Optional<Pago> pagoOptional = pagoRepository.findByExternalReference(externalReference);
+
+        if (pagoOptional.isPresent()) {
+
+            Pago pago = pagoOptional.get();
+
+            if (status.equals("approved")) {
+
+                pago.setEstadoPago(EstadoPago.APROBADO);
+                pago.setPaymentIdMP(paymentId.toString());
+            }
+
+            if (status.equals("rejected")) {
+
+                pago.setEstadoPago(EstadoPago.RECHAZADO);
+            }
+
+            pagoRepository.save(pago);
         }
     }
 }

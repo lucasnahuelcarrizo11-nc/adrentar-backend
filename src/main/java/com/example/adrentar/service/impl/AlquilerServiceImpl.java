@@ -78,7 +78,7 @@ public class AlquilerServiceImpl implements AlquilerService {
         emailService.enviarCorreo(
                 inquilino.getEmail(),
                 "Nueva solicitud de alquiler",
-                "Tenés una nueva solicitud de alquiler en Adrentar"
+                "Tenés una nueva solicitud de alquiler en Adrentar, Para completar la solicitud Tenes que ingresar a https://www.youtube.com/"
         );
     }
 

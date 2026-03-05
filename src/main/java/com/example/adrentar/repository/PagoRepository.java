@@ -15,4 +15,7 @@ public interface PagoRepository extends JpaRepository<Pago, Integer> {
     List<Pago> findByAlquilerIdAlquiler(Long idAlquiler);
 
     Optional<Pago> findByExternalReference(String externalReference);
+
+
+    Pago findByAlquilerAndMesAndAnio(Alquiler alquiler, int mes, int anio);
 }

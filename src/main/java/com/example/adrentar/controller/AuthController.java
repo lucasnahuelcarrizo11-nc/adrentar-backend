@@ -22,15 +22,7 @@ public class AuthController {
         this.usuarioService = usuarioService;
     }
 
-    @PostMapping("/registro/propietario")
-    public ResponseEntity<Usuario> registrarPropietario(@RequestBody Propietario propietario) {
-        return ResponseEntity.ok(usuarioService.registrarUsuario(propietario));
-    }
 
-    @PostMapping("/registro/inquilino")
-    public ResponseEntity<Usuario> registrarInquilino(@RequestBody Inquilino inquilino) {
-        return ResponseEntity.ok(usuarioService.registrarUsuario(inquilino));
-    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> datos) {

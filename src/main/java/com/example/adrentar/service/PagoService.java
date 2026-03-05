@@ -13,5 +13,6 @@ public interface PagoService {
     void procesarPagoDesdeWebhook(String paymentId);
 
     List<PagoDto> obtenerPagosPorAlquiler(Long idAlquiler);
+    void procesarPago(Long paymentId) throws Exception;
 
 }

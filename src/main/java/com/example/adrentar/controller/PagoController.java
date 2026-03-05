@@ -28,14 +28,40 @@ public class PagoController {
                     pagoService.crearPreference(idAlquiler, mes, anio)
             );
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(
+                    e.getClass().getSimpleName() + " - " + e.getMessage()
+            );
     }
-
+}
     @GetMapping("/alquiler/{idAlquiler}")
     public ResponseEntity<?> pagosPorAlquiler(@PathVariable Long idAlquiler) {
         return ResponseEntity.ok(
                 pagoService.obtenerPagosPorAlquiler(idAlquiler)
         );
+    }
+
+
+    @PostMapping("/webhook")
+    public ResponseEntity<?> recibirWebhook(@RequestBody Map<String, Object> body) {
+
+        System.out.println("Webhook recibido: " + body);
+
+        try {
+
+            Map<String, Object> data = (Map<String, Object>) body.get("data");
+
+            if (data != null && data.get("id") != null) {
+
+                Long paymentId = Long.valueOf(data.get("id").toString());
+
+                pagoService.procesarPago(paymentId);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ResponseEntity.ok().build();
     }
 }
