@@ -49,11 +49,31 @@ public class PagoController {
 
         try {
 
-            Map<String, Object> data = (Map<String, Object>) body.get("data");
+            Long paymentId = null;
 
-            if (data != null && data.get("id") != null) {
+            // CASO 1 -> webhook con data.id
+            if (body.containsKey("data")) {
 
-                Long paymentId = Long.valueOf(data.get("id").toString());
+                Map<String, Object> data = (Map<String, Object>) body.get("data");
+
+                if (data.get("id") != null) {
+                    paymentId = Long.valueOf(data.get("id").toString());
+                }
+            }
+
+            // CASO 2 -> webhook con resource
+            if (paymentId == null && body.get("resource") != null) {
+
+                String resource = body.get("resource").toString();
+
+                if (resource.matches("\\d+")) {
+                    paymentId = Long.valueOf(resource);
+                }
+            }
+
+            if (paymentId != null) {
+
+                System.out.println("Procesando pago MP: " + paymentId);
 
                 pagoService.procesarPago(paymentId);
             }
