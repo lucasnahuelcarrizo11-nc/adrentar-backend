@@ -170,18 +170,33 @@ public class PagoServiceImpl implements PagoService {
 
             Pago pago = pagoOptional.get();
 
-            if (status.equals("approved")) {
+            // 🔥 SIEMPRE guardar el paymentId
+            pago.setPaymentIdMP(paymentId.toString());
 
-                pago.setEstadoPago(EstadoPago.APROBADO);
-                pago.setPaymentIdMP(paymentId.toString());
+            // 🔥 manejar TODOS los estados
+            switch (status) {
+                case "approved":
+                    pago.setEstadoPago(EstadoPago.APROBADO);
+                    break;
+
+                case "rejected":
+                    pago.setEstadoPago(EstadoPago.RECHAZADO);
+                    break;
+
+                case "pending":
+                    pago.setEstadoPago(EstadoPago.PENDIENTE);
+                    break;
+
+                default:
+                    System.out.println("Estado desconocido: " + status);
             }
 
-            if (status.equals("rejected")) {
-
-                pago.setEstadoPago(EstadoPago.RECHAZADO);
-            }
+            pago.setFechaActualizacion(new Date());
 
             pagoRepository.save(pago);
+
+        } else {
+            System.out.println("❌ No se encontró pago con externalReference: " + externalReference);
         }
     }
 }

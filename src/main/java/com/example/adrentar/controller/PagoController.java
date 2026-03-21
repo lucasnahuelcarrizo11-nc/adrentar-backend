@@ -75,7 +75,7 @@ public class PagoController {
 
                 System.out.println("Procesando pago MP: " + paymentId);
 
-                pagoService.procesarPago(paymentId);
+                pagoService.procesarPagoDesdeWebhook(paymentId.toString());
             }
 
         } catch (Exception e) {
