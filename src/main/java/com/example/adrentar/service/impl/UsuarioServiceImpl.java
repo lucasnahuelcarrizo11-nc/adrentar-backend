@@ -5,6 +5,7 @@ import com.example.adrentar.repository.UsuarioRepository;
 import com.example.adrentar.service.EmailService;
 import com.example.adrentar.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,7 +18,8 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
     @Autowired
     private EmailService emailService;
-
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
@@ -69,7 +71,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                 email,
                 "Recuperar contraseña - Adrentar",
                 "Hacé click en el siguiente link para recuperar tu contraseña (válido 30 min):\n"
-                        + "http://localhost:5173/reset-contrasenia?token=" + token
+                        + frontendUrl + "/reset-contrasenia?token=" + token
         );
     }
 
