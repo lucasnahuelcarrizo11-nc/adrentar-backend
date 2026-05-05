@@ -16,4 +16,6 @@ public interface UsuarioService {
 
     void logout(String token);
 
+        void solicitarRecuperacion(String email);
+     void resetContrasenia(String token, String nuevaContrasenia);
 }

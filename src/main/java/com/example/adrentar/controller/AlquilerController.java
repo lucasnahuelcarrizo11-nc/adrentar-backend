@@ -48,4 +48,13 @@ public class AlquilerController {
         alquilerService.rechazarAlquiler(token, id);
         return ResponseEntity.ok("Alquiler rechazado");
     }
+
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<?> cancelar(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long id) {
+
+        alquilerService.cancelarAlquiler(token, id);
+        return ResponseEntity.ok("Alquiler cancelado");
+    }
 }

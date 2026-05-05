@@ -78,7 +78,7 @@ public class AlquilerServiceImpl implements AlquilerService {
         emailService.enviarCorreo(
                 inquilino.getEmail(),
                 "Nueva solicitud de alquiler",
-                "Tenés una nueva solicitud de alquiler en Adrentar, Para completar la solicitud Tenes que ingresar a https://www.youtube.com/"
+                "Tenés una nueva solicitud de alquiler en Adrentar, Para completar la solicitud Tenes que ingresar a https://adrentar-frontend.vercel.app/"
         );
     }
 
@@ -175,5 +175,65 @@ public class AlquilerServiceImpl implements AlquilerService {
 
         alquiler.setEstado("RECHAZADO");
         alquilerRepository.save(alquiler);
+    }
+    /* ===============================
+   CANCELAR ALQUILER
+================================ */
+    @Override
+    public void cancelarAlquiler(String token, Long idAlquiler) {
+
+        String tokenLimpio = token.replace("Bearer ", "").trim();
+
+        Usuario usuario = usuarioService.getUsuarioPorToken(tokenLimpio)
+                .orElseThrow(() -> new RuntimeException("Token inválido"));
+
+        Alquiler alquiler = alquilerRepository.findById(idAlquiler)
+                .orElseThrow(() -> new RuntimeException("Alquiler no encontrado"));
+
+        // Tanto inquilino como propietario pueden cancelar, pero solo el suyo
+        if (usuario instanceof Inquilino i) {
+            if (!alquiler.getInquilino().getIdUsuario().equals(i.getIdUsuario())) {
+                throw new RuntimeException("No tenés permiso para cancelar este alquiler");
+            }
+        } else if (usuario instanceof Propietario p) {
+            if (!alquiler.getPropietario().getIdUsuario().equals(p.getIdUsuario())) {
+                throw new RuntimeException("No tenés permiso para cancelar este alquiler");
+            }
+        } else {
+            throw new RuntimeException("Tipo de usuario no válido");
+        }
+
+        if (alquiler.getEstado().equals("CANCELADO")) {
+            throw new RuntimeException("El alquiler ya fue cancelado");
+        }
+
+        alquiler.setEstado("CANCELADO");
+        alquilerRepository.save(alquiler);
+
+        // Notificar a la otra parte
+        String mensajeNoti;
+        String emailDestino;
+
+        if (usuario instanceof Inquilino) {
+            // Canceló el inquilino → notificar al propietario
+            mensajeNoti = "El inquilino canceló el alquiler de " + alquiler.getPropiedad().getDireccion();
+            emailDestino = alquiler.getPropietario().getEmail();
+        } else {
+            // Canceló el propietario → notificar al inquilino
+            mensajeNoti = "El propietario canceló el alquiler de " + alquiler.getPropiedad().getDireccion();
+
+            Notificacion noti = new Notificacion();
+            noti.setMensaje(mensajeNoti);
+            noti.setInquilino(alquiler.getInquilino());
+            notificacionRepository.save(noti);
+
+            emailDestino = alquiler.getInquilino().getEmail();
+        }
+
+        emailService.enviarCorreo(
+                emailDestino,
+                "Alquiler cancelado",
+                mensajeNoti + ". Ingresá a Adrentar para más detalles."
+        );
     }
 }

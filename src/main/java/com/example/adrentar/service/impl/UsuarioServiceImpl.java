@@ -2,9 +2,12 @@ package com.example.adrentar.service.impl;
 
 import com.example.adrentar.entity.Usuario;
 import com.example.adrentar.repository.UsuarioRepository;
+import com.example.adrentar.service.EmailService;
 import com.example.adrentar.service.UsuarioService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,6 +15,9 @@ import java.util.UUID;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    @Autowired
+    private EmailService emailService;
+
 
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
@@ -49,4 +55,36 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuarioRepository.save(u);
         });
     }
+
+    public void solicitarRecuperacion(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email no encontrado"));
+
+        String token = UUID.randomUUID().toString();
+        usuario.setTokenRecuperacion(token);
+        usuario.setTokenExpiracion(LocalDateTime.now().plusMinutes(30));
+        usuarioRepository.save(usuario);
+
+        emailService.enviarCorreo(
+                email,
+                "Recuperar contraseña - Adrentar",
+                "Hacé click en el siguiente link para recuperar tu contraseña (válido 30 min):\n"
+                        + "http://localhost:5173/reset-contrasenia?token=" + token
+        );
+    }
+
+    public void resetContrasenia(String token, String nuevaContrasenia) {
+        Usuario usuario = usuarioRepository.findByTokenRecuperacion(token)
+                .orElseThrow(() -> new RuntimeException("Token inválido"));
+
+        if (usuario.getTokenExpiracion().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("El token expiró");
+        }
+
+        usuario.setContrasenia(nuevaContrasenia);
+        usuario.setTokenRecuperacion(null);
+        usuario.setTokenExpiracion(null);
+        usuarioRepository.save(usuario);
+    }
+
 }

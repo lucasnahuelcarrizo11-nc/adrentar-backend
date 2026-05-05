@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "tipo_usuario", discriminatorType = DiscriminatorType.STRING)
@@ -33,6 +35,9 @@ public abstract class Usuario {
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String contrasenia;
+
+    private String tokenRecuperacion;
+    private LocalDateTime tokenExpiracion;
 
     @Column(unique = true)
     private String token; // ✅ agregamos token

@@ -17,5 +17,5 @@ public interface AlquilerService {
 
     void rechazarAlquiler(String token, Long idAlquiler);
 
-
+    void cancelarAlquiler(String token, Long idAlquiler);
 }

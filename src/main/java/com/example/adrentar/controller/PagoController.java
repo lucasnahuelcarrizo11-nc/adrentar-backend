@@ -61,13 +61,21 @@ public class PagoController {
                 }
             }
 
-            // CASO 2 -> webhook con resource
+// CASO 2 -> webhook con resource (URL completa o solo ID)
             if (paymentId == null && body.get("resource") != null) {
 
                 String resource = body.get("resource").toString();
 
                 if (resource.matches("\\d+")) {
+                    // MP mandó solo el número
                     paymentId = Long.valueOf(resource);
+                } else if (resource.contains("/")) {
+                    // MP mandó la URL completa -> extraer último segmento
+                    String[] parts = resource.split("/");
+                    String lastPart = parts[parts.length - 1];
+                    if (lastPart.matches("\\d+")) {
+                        paymentId = Long.valueOf(lastPart);
+                    }
                 }
             }
 

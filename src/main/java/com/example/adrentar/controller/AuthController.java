@@ -53,4 +53,20 @@ public class AuthController {
         usuarioService.logout(token);
         return ResponseEntity.ok("Sesión cerrada");
     }
+
+    @PostMapping("/recuperar-contrasenia")
+    public ResponseEntity<?> recuperarContrasenia(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        usuarioService.solicitarRecuperacion(email);
+        return ResponseEntity.ok("Si el email existe, recibirás un correo");
+    }
+
+    @PostMapping("/reset-contrasenia")
+    public ResponseEntity<?> resetContrasenia(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        String nuevaContrasenia = body.get("nuevaContrasenia");
+        usuarioService.resetContrasenia(token, nuevaContrasenia);
+        return ResponseEntity.ok("Contraseña actualizada correctamente");
+    }
+
 }
