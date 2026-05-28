@@ -75,11 +75,11 @@ public class AlquilerServiceImpl implements AlquilerService {
         noti.setInquilino(inquilino);
         notificacionRepository.save(noti);
 
-        emailService.enviarCorreo(
+       /* emailService.enviarCorreo(
                 inquilino.getEmail(),
                 "Nueva solicitud de alquiler",
                 "Tenés una nueva solicitud de alquiler en Adrentar, Para completar la solicitud Tenes que ingresar a https://adrentar-frontend.vercel.app/"
-        );
+        );*/
     }
 
     /* ===============================
@@ -230,10 +230,10 @@ public class AlquilerServiceImpl implements AlquilerService {
             emailDestino = alquiler.getInquilino().getEmail();
         }
 
-        emailService.enviarCorreo(
+     /*   emailService.enviarCorreo(
                 emailDestino,
                 "Alquiler cancelado",
                 mensajeNoti + ". Ingresá a Adrentar para más detalles."
-        );
+        );*/
     }
 }
