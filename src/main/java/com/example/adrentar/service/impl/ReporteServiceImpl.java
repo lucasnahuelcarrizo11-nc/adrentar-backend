@@ -17,6 +17,8 @@ import java.util.List;
 public class ReporteServiceImpl implements ReporteService {
 
     @Autowired
+    private NotificacionServiceImpl notificacionServiceImpl;
+    @Autowired
     private ReporteRepository reporteRepository;
 
     @Autowired
@@ -39,7 +41,15 @@ public class ReporteServiceImpl implements ReporteService {
         reporte.setFechaCreacion(LocalDateTime.now());
 
         Reporte guardado = reporteRepository.save(reporte);
+
+        notificacionServiceImpl.notificarPropietario(
+                alquiler.getPropietario(),
+                "El inquilino realizo un reporte en "+alquiler.getPropiedad().getDireccion()  + ": " + dto.getDescripcion()
+        );
+
         return mapToDto(guardado);
+
+
     }
 
     @Override
@@ -60,7 +70,9 @@ public class ReporteServiceImpl implements ReporteService {
         reporte.setFechaActualizacion(LocalDateTime.now());
 
         Reporte actualizado = reporteRepository.save(reporte);
+
         return mapToDto(actualizado);
+
     }
 
     private ReporteDto mapToDto(Reporte reporte) {

@@ -6,6 +6,7 @@ import com.example.adrentar.entity.*;
 import com.example.adrentar.repository.*;
 import com.example.adrentar.service.AlquilerService;
 import com.example.adrentar.service.EmailService;
+import com.example.adrentar.service.NotificacionService;
 import com.example.adrentar.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,9 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private NotificacionServiceImpl notificacionServiceImpl;
 
     @Autowired
     private EmailService emailService;
@@ -80,6 +84,13 @@ public class AlquilerServiceImpl implements AlquilerService {
                 "Nueva solicitud de alquiler",
                 "Tenés una nueva solicitud de alquiler en Adrentar, Para completar la solicitud Tenes que ingresar a https://adrentar-frontend.vercel.app/"
         );*/
+
+        alquilerRepository.save(alquiler);
+
+        notificacionServiceImpl.notificarInquilino(
+                inquilino,
+                "Tenés una nueva solicitud de alquiler en " + propiedad.getDireccion()
+        );
     }
 
     /* ===============================
@@ -153,6 +164,12 @@ public class AlquilerServiceImpl implements AlquilerService {
 
         alquiler.setEstado("ACEPTADO");
         alquilerRepository.save(alquiler);
+
+        notificacionServiceImpl.notificarPropietario(
+                alquiler.getPropietario(),
+                "El inquilino " + alquiler.getInquilino().getNombre()
+                        + " aceptó el alquiler de " + alquiler.getPropiedad().getDireccion()
+        );
     }
 
     /* ===============================
@@ -175,6 +192,12 @@ public class AlquilerServiceImpl implements AlquilerService {
 
         alquiler.setEstado("RECHAZADO");
         alquilerRepository.save(alquiler);
+
+        notificacionServiceImpl.notificarPropietario(
+                alquiler.getPropietario(),
+                "El inquilino " + alquiler.getInquilino().getNombre()
+                        + " Rechazo el alquiler de " + alquiler.getPropiedad().getDireccion()
+        );
     }
     /* ===============================
    CANCELAR ALQUILER
@@ -230,6 +253,12 @@ public class AlquilerServiceImpl implements AlquilerService {
             emailDestino = alquiler.getInquilino().getEmail();
         }
 
+        notificacionServiceImpl.notificarAmbos(
+                alquiler.getInquilino(),
+                alquiler.getPropietario(),
+                "El alquiler de " + alquiler.getPropiedad().getDireccion() + " fue cancelado.",
+                "El alquiler de " + alquiler.getPropiedad().getDireccion() + " fue cancelado."
+        );
      /*   emailService.enviarCorreo(
                 emailDestino,
                 "Alquiler cancelado",
