@@ -24,5 +24,5 @@ public class Notificacion {
 
     @ManyToOne
     @JoinColumn(name = "id_propietario")
-    private Propietario Propietario;
+    private Propietario propietario;
 }
