@@ -66,6 +66,7 @@ private PropiedadRepository propiedadRepository;
         }
 
         // ✅ Actualizar campos
+        existente.setTituloPropiedad(propiedad.getTituloPropiedad());
         existente.setDireccion(propiedad.getDireccion());
         existente.setEstado(propiedad.getEstado());
         existente.setAmbientes(propiedad.getAmbientes());

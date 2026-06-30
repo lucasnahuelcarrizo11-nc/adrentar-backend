@@ -34,8 +34,12 @@ public class Propiedad {
     @NotBlank(message = "El estado es obligatorio")
     private String estado;
 
+    
     @Column( nullable = false)
+    @NotBlank(message = "El estado es obligatorio")
+    private String TituloPropiedad;
 
+    @Column( nullable = false)
     private int ambientes;
 
     @Column
