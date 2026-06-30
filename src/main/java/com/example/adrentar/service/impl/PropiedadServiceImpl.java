@@ -23,6 +23,10 @@ private PropiedadRepository propiedadRepository;
 
     @Override
     public Propiedad crearPropiedad(Propiedad propiedad) {
+
+    System.out.println("Objeto recibido: " + propiedad);
+    System.out.println("Dirección: " + propiedad.getDireccion());
+
         if (propiedadRepository.existsByDireccion(propiedad.getDireccion())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
