@@ -1,5 +1,6 @@
 package com.example.adrentar.service.impl;
 
+import com.example.adrentar.dto.AlquilerCreadoDto;
 import com.example.adrentar.dto.AlquilerListadoDto;
 import com.example.adrentar.dto.CrearAlquilerDto;
 import com.example.adrentar.entity.*;
@@ -41,7 +42,7 @@ public class AlquilerServiceImpl implements AlquilerService {
        CREAR ALQUILER
     ================================ */
     @Override
-    public void crearAlquiler(String token, CrearAlquilerDto dto) {
+    public AlquilerCreadoDto crearAlquiler(String token, CrearAlquilerDto dto) {
 
         String tokenLimpio = token.replace("Bearer ", "").trim();
 
@@ -79,17 +80,19 @@ public class AlquilerServiceImpl implements AlquilerService {
         noti.setInquilino(inquilino);
         notificacionRepository.save(noti);
 
-       /* emailService.enviarCorreo(
-                inquilino.getEmail(),
-                "Nueva solicitud de alquiler",
-                "Tenés una nueva solicitud de alquiler en Adrentar, Para completar la solicitud Tenes que ingresar a https://adrentar-frontend.vercel.app/"
-        );*/
-
-        alquilerRepository.save(alquiler);
-
         notificacionServiceImpl.notificarInquilino(
                 inquilino,
                 "Tenés una nueva solicitud de alquiler en " + propiedad.getDireccion()
+        );
+
+        return new AlquilerCreadoDto(
+                alquiler.getIdAlquiler(),
+                inquilino.getEmail(),
+                inquilino.getNombre() + " " + inquilino.getApellido(),
+                propiedad.getDireccion(),
+                dto.getFechaInicio().toString(),
+                dto.getFechaFin().toString(),
+                dto.getPrecio()
         );
     }
 

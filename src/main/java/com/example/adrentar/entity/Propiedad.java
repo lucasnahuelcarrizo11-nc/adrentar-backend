@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -57,6 +58,7 @@ public class Propiedad {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_propietario")
     @JsonIgnore
+    @ToString.Exclude
     private Propietario propietario;
 
     @OneToMany(mappedBy = "propiedad", cascade = CascadeType.ALL)

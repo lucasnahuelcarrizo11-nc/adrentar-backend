@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class Propietario extends Usuario {
     @JsonIgnore // ✅ evita errores de deserialización y bucles
     private List<Propiedad> propiedades;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "propietario", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Alquiler> alquileres;

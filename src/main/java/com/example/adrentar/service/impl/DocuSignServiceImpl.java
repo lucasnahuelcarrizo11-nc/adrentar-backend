@@ -29,8 +29,11 @@ public class DocuSignServiceImpl implements DocuSignService {
     }
 
     @Override
-    public String sendEnvelopeByEmail(String signerEmail, String signerName,
-                                      String documentBase64, String documentName) throws Exception {
+    public String sendEnvelopeForTwoSigners(
+            String signer1Email, String signer1Name,   // propietario (firma embebida)
+            String signer2Email, String signer2Name,   // inquilino (firma por email)
+            String documentBase64, String documentName) throws Exception {
+
         RestTemplate restTemplate = new RestTemplate();
 
         Map<String, Object> document = Map.of(
@@ -40,26 +43,43 @@ public class DocuSignServiceImpl implements DocuSignService {
                 "documentId", "1"
         );
 
-        Map<String, Object> signHere = Map.of(
-                "anchorString", "/firma/",
+        Map<String, Object> signHere1 = Map.of(
+                "anchorString", "/firma-propietario/",
                 "anchorUnits", "pixels",
                 "anchorXOffset", "20",
                 "anchorYOffset", "-10"
         );
 
-        Map<String, Object> signer = Map.of(
-                "email", signerEmail,
-                "name", signerName,
+        Map<String, Object> signHere2 = Map.of(
+                "anchorString", "/firma-inquilino/",
+                "anchorUnits", "pixels",
+                "anchorXOffset", "20",
+                "anchorYOffset", "-10"
+        );
+
+        // Propietario: firma embebida (tiene clientUserId)
+        Map<String, Object> propietario = Map.of(
+                "email", signer1Email,
+                "name", signer1Name,
                 "recipientId", "1",
                 "routingOrder", "1",
-                "clientUserId", "1001",   // ← agregar esta línea
-                "tabs", Map.of("signHereTabs", List.of(signHere))
+                "clientUserId", "1001",
+                "tabs", Map.of("signHereTabs", List.of(signHere1))
+        );
+
+        // Inquilino: firma por email (sin clientUserId)
+        Map<String, Object> inquilino = Map.of(
+                "email", signer2Email,
+                "name", signer2Name,
+                "recipientId", "2",
+                "routingOrder", "2",
+                "tabs", Map.of("signHereTabs", List.of(signHere2))
         );
 
         Map<String, Object> envelope = Map.of(
-                "emailSubject", "Por favor firmá el documento: " + documentName,
+                "emailSubject", "Contrato de alquiler - " + documentName.substring(0, Math.min(documentName.length(), 70)),
                 "documents", List.of(document),
-                "recipients", Map.of("signers", List.of(signer)),
+                "recipients", Map.of("signers", List.of(propietario, inquilino)),
                 "status", "sent"
         );
 

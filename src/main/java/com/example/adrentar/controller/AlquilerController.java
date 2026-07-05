@@ -1,6 +1,7 @@
 package com.example.adrentar.controller;
 
 
+import com.example.adrentar.dto.AlquilerCreadoDto;
 import com.example.adrentar.dto.CrearAlquilerDto;
 import com.example.adrentar.service.impl.AlquilerServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,8 @@ public class AlquilerController {
             @RequestHeader("Authorization") String token,
             @RequestBody CrearAlquilerDto dto) {
 
-        alquilerService.crearAlquiler(token, dto);
-        return ResponseEntity.ok("Alquiler creado correctamente");
+        AlquilerCreadoDto resultado = alquilerService.crearAlquiler(token, dto);
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/mis-alquileres")

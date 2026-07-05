@@ -1,6 +1,7 @@
 package com.example.adrentar.controller;
 
 import com.example.adrentar.dto.EmbeddedSignRequest;
+import com.example.adrentar.dto.SendContratoRequest;
 import com.example.adrentar.dto.SendDocumentRequest;
 import com.example.adrentar.service.DocuSignService;
 import lombok.RequiredArgsConstructor;
@@ -16,17 +17,19 @@ import java.util.Map;
 public class DocuSignController {
     private final DocuSignService docuSignService;
 
-    @PostMapping("/send")
-    public ResponseEntity<Map<String, String>> sendDocument(
-            @RequestBody SendDocumentRequest request) {
+    @PostMapping("/send-contrato")
+    public ResponseEntity<Map<String, String>> sendContrato(
+            @RequestBody SendContratoRequest request) {
         try {
-            String envelopeId = docuSignService.sendEnvelopeByEmail(
-                    request.getSignerEmail(),
-                    request.getSignerName(),
+            String envelopeId = docuSignService.sendEnvelopeForTwoSigners(
+                    request.getPropietarioEmail(),
+                    request.getPropietarioNombre(),
+                    request.getInquilinoEmail(),
+                    request.getInquilinoNombre(),
                     request.getDocumentBase64(),
                     request.getDocumentName()
             );
-            return ResponseEntity.ok(Map.of("envelopeId", envelopeId, "status", "sent"));
+            return ResponseEntity.ok(Map.of("envelopeId", envelopeId));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
@@ -71,19 +74,5 @@ public class DocuSignController {
 
     }
 
-    @GetMapping("/test-send")
-    public ResponseEntity<Map<String, String>> testSend() {
-        try {
 
-            String envelopeId = docuSignService.sendEnvelopeByEmail(
-                    "lcAdrentar@yopmail.com",
-                    "Lucas Test",
-                    "pdfBase64",
-                    "Contrato de prueba"
-            );
-            return ResponseEntity.ok(Map.of("envelopeId", envelopeId, "status", "sent"));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-        }
     }
-}

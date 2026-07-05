@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,6 +38,23 @@ public abstract class Usuario {
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String contrasenia;
 
+    @Column(nullable = true)
+    private String dni;
+
+    @Column(nullable = true)
+    private Date fechaNacimiento;
+
+    @Column(nullable = true)
+    private String telefono;
+
+
+    @Column(nullable = true)
+    private LocalDate fechaRegistro;
+
+    @PrePersist
+    public void onCreate() {
+        fechaRegistro = LocalDate.now();
+    }
     private String tokenRecuperacion;
     private LocalDateTime tokenExpiracion;
 
