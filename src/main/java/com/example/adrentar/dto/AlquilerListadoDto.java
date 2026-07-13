@@ -15,9 +15,12 @@ public class AlquilerListadoDto {
 
     private String nombreInquilino;
     private String apellidoInquilino;
+    private String emailInquilino;
 
     private Date fechaInicio;
     private Date fechaFin;
     private String estado;
     private double precio;
+
+    private String envelopeId;
 }

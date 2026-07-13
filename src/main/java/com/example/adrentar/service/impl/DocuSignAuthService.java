@@ -1,6 +1,5 @@
 package com.example.adrentar.service.impl;
 
-
 import com.example.adrentar.config.DocuSignConfig;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
@@ -41,22 +40,33 @@ public class DocuSignAuthService {
     }
 
     private void refreshToken() throws Exception {
-        // 1. Cargar y parsear la clave privada
-        Resource resource = new ClassPathResource("docusign_private.key");
-        String keyContent = new String(resource.getInputStream().readAllBytes())
-                .replaceAll("-----BEGIN.*?-----", "")
-                .replaceAll("-----END.*?-----", "")
-                .replaceAll("\\s", "");
+        // 1. Cargar clave privada — desde variable de entorno en prod, desde archivo en local
+        String keyContent;
+        String envKey = System.getenv("DOCUSIGN_PRIVATE_KEY");
+
+        if (envKey != null && !envKey.isBlank()) {
+            // Producción (Render): viene de variable de entorno
+            keyContent = envKey
+                    .replace("\\n", "\n")
+                    .replaceAll("-----BEGIN.*?-----", "")
+                    .replaceAll("-----END.*?-----", "")
+                    .replaceAll("\\s", "");
+        } else {
+            // Local: viene del archivo
+            Resource resource = new ClassPathResource("docusign_private.key");
+            keyContent = new String(resource.getInputStream().readAllBytes())
+                    .replaceAll("-----BEGIN.*?-----", "")
+                    .replaceAll("-----END.*?-----", "")
+                    .replaceAll("\\s", "");
+        }
 
         byte[] keyBytes = Base64.getDecoder().decode(keyContent);
 
         PrivateKey privateKey;
         try {
-            // Intentar PKCS#8 primero
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
             privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
         } catch (Exception e) {
-            // Si falla, intentar PKCS#1 via BouncyCastle
             org.bouncycastle.asn1.pkcs.RSAPrivateKey rsaKey =
                     org.bouncycastle.asn1.pkcs.RSAPrivateKey.getInstance(keyBytes);
             RSAPrivateCrtKeySpec spec = new RSAPrivateCrtKeySpec(
@@ -98,7 +108,7 @@ public class DocuSignAuthService {
 
         try {
             Map<String, Object> response = restTemplate.postForObject(tokenUrl, request, Map.class);
-            System.out.println("=== Token response: " + response + " ===");
+            System.out.println("=== Token response OK ===");
 
             accessToken = (String) response.get("access_token");
             Integer expiresIn = (Integer) response.get("expires_in");

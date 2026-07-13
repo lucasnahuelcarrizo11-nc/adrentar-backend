@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class SendContratoRequest {
+    private Long idAlquiler;
     private String propietarioEmail;
     private String propietarioNombre;
     private String inquilinoEmail;

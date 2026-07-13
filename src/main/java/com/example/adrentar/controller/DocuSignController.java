@@ -2,12 +2,13 @@ package com.example.adrentar.controller;
 
 import com.example.adrentar.dto.EmbeddedSignRequest;
 import com.example.adrentar.dto.SendContratoRequest;
-import com.example.adrentar.dto.SendDocumentRequest;
+import com.example.adrentar.repository.AlquilerRepository;
 import com.example.adrentar.service.DocuSignService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -15,7 +16,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "${frontend.url}")
 public class DocuSignController {
+
     private final DocuSignService docuSignService;
+    private final AlquilerRepository alquilerRepository;
 
     @PostMapping("/send-contrato")
     public ResponseEntity<Map<String, String>> sendContrato(
@@ -29,12 +32,25 @@ public class DocuSignController {
                     request.getDocumentBase64(),
                     request.getDocumentName()
             );
-            return ResponseEntity.ok(Map.of("envelopeId", envelopeId));
+
+            if (request.getIdAlquiler() != null) {
+                alquilerRepository.findById(request.getIdAlquiler()).ifPresent(alq -> {
+                    alq.setEnvelopeId(envelopeId);
+                    alquilerRepository.save(alq);
+                });
+            }
+
+            // Map.of() no acepta nulls — usar HashMap en su lugar
+            Map<String, String> response = new HashMap<>();
+            response.put("envelopeId", envelopeId != null ? envelopeId : "");
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage() != null ? e.getMessage() : "Error desconocido");
+            return ResponseEntity.status(500).body(error);
         }
     }
-
     @PostMapping("/embedded-url")
     public ResponseEntity<Map<String, String>> getEmbeddedUrl(
             @RequestBody EmbeddedSignRequest request) {
@@ -51,6 +67,14 @@ public class DocuSignController {
         }
     }
 
+    @GetMapping("/envelope/{idAlquiler}")
+    public ResponseEntity<Map<String, String>> getEnvelopeId(@PathVariable Long idAlquiler) {
+        return alquilerRepository.findById(idAlquiler)
+                .filter(alq -> alq.getEnvelopeId() != null)
+                .map(alq -> ResponseEntity.ok(Map.of("envelopeId", alq.getEnvelopeId())))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/download/{envelopeId}")
     public ResponseEntity<byte[]> downloadDocument(@PathVariable String envelopeId) {
         try {
@@ -64,15 +88,9 @@ public class DocuSignController {
         }
     }
 
-    // Webhook de DocuSign para recibir notificaciones de estado
     @PostMapping("/webhook")
     public ResponseEntity<Void> handleWebhook(@RequestBody String payload) {
-        // Parsear el XML/JSON de DocuSign y actualizar tu DB
-        // Eventos: envelope-completed, envelope-sent, envelope-declined, etc.
         System.out.println("DocuSign webhook: " + payload);
         return ResponseEntity.ok().build();
-
     }
-
-
-    }
+}

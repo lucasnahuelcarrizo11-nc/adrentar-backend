@@ -127,6 +127,8 @@ public class AlquilerServiceImpl implements AlquilerService {
             dto.setFechaInicio(a.getFechaInicio());
             dto.setFechaFin(a.getFechaFin());
             dto.setEstado(a.getEstado());
+            dto.setEmailInquilino(a.getInquilino().getEmail());
+            dto.setEnvelopeId(a.getEnvelopeId()); // ← agregar esto
 
             dto.setDireccionPropiedad(
                     a.getPropiedad().getDireccion()

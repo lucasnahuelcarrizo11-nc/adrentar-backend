@@ -16,6 +16,7 @@ import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -30,9 +31,11 @@ public class Alquiler {
     private Date fechaInicio;
     private Date fechaFin;
 
-
     @Column(nullable = false)
     private String estado;
+
+    @Column(name = "envelope_id")
+    private String envelopeId;
 
     @ManyToOne
     @JoinColumn(name = "id_propietario")
