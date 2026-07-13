@@ -49,18 +49,30 @@ public class DocuSignAuthService {
             keyContent = envKey
                     .replace("\\n", "\n")
                     .replaceAll("-----BEGIN.*?-----", "")
-                    .replaceAll("-----END.*?-----", "")
-                    .replaceAll("\\s", "");
+                    .replaceAll("-----END.*?-----", "");
         } else {
             // Local: viene del archivo
             Resource resource = new ClassPathResource("docusign_private.key");
             keyContent = new String(resource.getInputStream().readAllBytes())
                     .replaceAll("-----BEGIN.*?-----", "")
-                    .replaceAll("-----END.*?-----", "")
-                    .replaceAll("\\s", "");
+                    .replaceAll("-----END.*?-----", "");
         }
 
-        byte[] keyBytes = Base64.getDecoder().decode(keyContent);
+        // Nos quedamos SOLO con caracteres válidos de base64. Esto elimina saltos de
+        // línea, espacios, puntos u otros caracteres residuales que puedan haberse
+        // colado al pegar/guardar la clave en la variable de entorno de Render.
+        keyContent = keyContent.replaceAll("[^A-Za-z0-9+/=]", "");
+
+        System.out.println("=== keyContent length: " + keyContent.length() + " ===");
+
+        byte[] keyBytes;
+        try {
+            keyBytes = Base64.getDecoder().decode(keyContent);
+        } catch (IllegalArgumentException ex) {
+            System.out.println("=== keyContent inválido tras sanitizar. Preview: "
+                    + keyContent.substring(0, Math.min(60, keyContent.length())) + "... ===");
+            throw ex;
+        }
 
         PrivateKey privateKey;
         try {
@@ -119,5 +131,6 @@ public class DocuSignAuthService {
             System.out.println("=== Error al obtener token: " + e.getResponseBodyAsString() + " ===");
             throw e;
         }
+
     }
 }
