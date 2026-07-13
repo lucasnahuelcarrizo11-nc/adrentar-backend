@@ -2,12 +2,15 @@ package com.example.adrentar.controller;
 
 import com.example.adrentar.dto.EmbeddedSignRequest;
 import com.example.adrentar.dto.SendContratoRequest;
+import com.example.adrentar.entity.Alquiler;
 import com.example.adrentar.repository.AlquilerRepository;
 import com.example.adrentar.service.DocuSignService;
+import com.example.adrentar.service.impl.ContratoPdfServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,28 +22,50 @@ public class DocuSignController {
 
     private final DocuSignService docuSignService;
     private final AlquilerRepository alquilerRepository;
+    private final ContratoPdfServiceImpl contratoPdfService;
 
     @PostMapping("/send-contrato")
     public ResponseEntity<Map<String, String>> sendContrato(
             @RequestBody SendContratoRequest request) {
         try {
-            String envelopeId = docuSignService.sendEnvelopeForTwoSigners(
-                    request.getPropietarioEmail(),
-                    request.getPropietarioNombre(),
-                    request.getInquilinoEmail(),
-                    request.getInquilinoNombre(),
-                    request.getDocumentBase64(),
-                    request.getDocumentName()
-            );
-
-            if (request.getIdAlquiler() != null) {
-                alquilerRepository.findById(request.getIdAlquiler()).ifPresent(alq -> {
-                    alq.setEnvelopeId(envelopeId);
-                    alquilerRepository.save(alq);
-                });
+            if (request.getIdAlquiler() == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "idAlquiler es obligatorio");
+                return ResponseEntity.badRequest().body(error);
             }
 
-            // Map.of() no acepta nulls — usar HashMap en su lugar
+            Alquiler alquiler = alquilerRepository.findById(request.getIdAlquiler())
+                    .orElseThrow(() -> new RuntimeException("Alquiler no encontrado: " + request.getIdAlquiler()));
+
+            if (alquiler.getPropietario() == null || alquiler.getInquilino() == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "El alquiler no tiene propietario o inquilino asignado");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            // Generar el PDF en el momento, con los datos reales del alquiler.
+            // No depende de ningún archivo local ni de nada hardcodeado en el frontend.
+            byte[] pdfBytes = contratoPdfService.generarContratoPdf(alquiler);
+            String documentBase64 = Base64.getEncoder().encodeToString(pdfBytes);
+
+            String direccion = alquiler.getPropiedad() != null ? alquiler.getPropiedad().getDireccion() : "Propiedad";
+            String documentName = "Contrato - " + direccion;
+            if (documentName.length() > 70) {
+                documentName = documentName.substring(0, 70);
+            }
+
+            String envelopeId = docuSignService.sendEnvelopeForTwoSigners(
+                    alquiler.getPropietario().getEmail(),
+                    alquiler.getPropietario().getNombre(),
+                    alquiler.getInquilino().getEmail(),
+                    alquiler.getInquilino().getNombre(),
+                    documentBase64,
+                    documentName
+            );
+
+            alquiler.setEnvelopeId(envelopeId);
+            alquilerRepository.save(alquiler);
+
             Map<String, String> response = new HashMap<>();
             response.put("envelopeId", envelopeId != null ? envelopeId : "");
             return ResponseEntity.ok(response);
@@ -51,6 +76,7 @@ public class DocuSignController {
             return ResponseEntity.status(500).body(error);
         }
     }
+
     @PostMapping("/embedded-url")
     public ResponseEntity<Map<String, String>> getEmbeddedUrl(
             @RequestBody EmbeddedSignRequest request) {
