@@ -4,8 +4,6 @@ import lombok.Data;
 
 @Data
 public class EmbeddedSignRequest {
-    private String envelopeId;
-    private String signerEmail;
-    private String signerName;
+    private Long idAlquiler;
     private String returnUrl;  // URL
 }

@@ -1,5 +1,6 @@
 package com.example.adrentar.service;
 
+import com.example.adrentar.dto.ProveedorConPromedioDTO;
 import com.example.adrentar.entity.Propietario;
 import com.example.adrentar.entity.Proveedor;
 import org.springframework.stereotype.Service;
@@ -21,4 +22,7 @@ public interface ProveedorService {
     Proveedor actualizarProveedor(Long idProveedor , Proveedor proveedor) throws Exception;
 
     void eliminarProveedor(Long idProveedor ) throws Exception;
+
+    List<ProveedorConPromedioDTO> listarProveedoresConPromedio();
+
 }

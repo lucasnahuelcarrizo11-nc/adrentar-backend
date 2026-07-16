@@ -1,5 +1,6 @@
 package com.example.adrentar.controller;
 
+import com.example.adrentar.dto.ProveedorConPromedioDTO;
 import com.example.adrentar.entity.Propietario;
 import com.example.adrentar.entity.Proveedor;
 import com.example.adrentar.service.ProveedorService;
@@ -28,9 +29,9 @@ public class ProveedorController {
     }
 
     @GetMapping("/listarProveedores")
-    public ResponseEntity <List<Proveedor>> listarProveedores() {
-        List <Proveedor> proveedor = proveedorServiceImpl.mostrarProveedores();
-        return ResponseEntity.ok(proveedor);
+    public ResponseEntity<List<ProveedorConPromedioDTO>> listarProveedores() {
+        List<ProveedorConPromedioDTO> proveedores = proveedorServiceImpl.listarProveedoresConPromedio();
+        return ResponseEntity.ok(proveedores);
     }
     @GetMapping("/buscar/nombre/{nombre}")
     public ResponseEntity <?> buscarPorNombre(@PathVariable String nombre) {

@@ -43,8 +43,6 @@ public class DocuSignController {
                 return ResponseEntity.badRequest().body(error);
             }
 
-            // Generar el PDF en el momento, con los datos reales del alquiler.
-            // No depende de ningún archivo local ni de nada hardcodeado en el frontend.
             byte[] pdfBytes = contratoPdfService.generarContratoPdf(alquiler);
             String documentBase64 = Base64.getEncoder().encodeToString(pdfBytes);
 
@@ -81,15 +79,46 @@ public class DocuSignController {
     public ResponseEntity<Map<String, String>> getEmbeddedUrl(
             @RequestBody EmbeddedSignRequest request) {
         try {
+            if (request.getIdAlquiler() == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "idAlquiler es obligatorio");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            Alquiler alquiler = alquilerRepository.findById(request.getIdAlquiler())
+                    .orElseThrow(() -> new RuntimeException("Alquiler no encontrado: " + request.getIdAlquiler()));
+
+            if (alquiler.getEnvelopeId() == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Este alquiler todavía no tiene un contrato generado");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            if (alquiler.getPropietario() == null) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "El alquiler no tiene propietario asignado");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            // Usamos SIEMPRE el email/nombre guardados en la entidad — deben ser
+            // idénticos, carácter por carácter, a los que se usaron al crear el
+            // envelope. Si acá usáramos datos que vienen del frontend (ej. el
+            // usuario en sesión) y difieren aunque sea en un espacio o mayúscula,
+            // DocuSign responde UNKNOWN_ENVELOPE_RECIPIENT.
             String url = docuSignService.getEmbeddedSigningUrl(
-                    request.getEnvelopeId(),
-                    request.getSignerEmail(),
-                    request.getSignerName(),
+                    alquiler.getEnvelopeId(),
+                    alquiler.getPropietario().getEmail(),
+                    alquiler.getPropietario().getNombre(),
                     request.getReturnUrl()
             );
-            return ResponseEntity.ok(Map.of("signingUrl", url));
+
+            Map<String, String> response = new HashMap<>();
+            response.put("signingUrl", url);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage() != null ? e.getMessage() : "Error desconocido");
+            return ResponseEntity.status(500).body(error);
         }
     }
 
