@@ -51,6 +51,7 @@ public class PropietarioServiceImpl implements PropietarioService {
         return propietarioRepository.save(propietarioActual);
 
     }
+    //hola
 
     @Override
     public void eliminarPropietario(Long idPropietario) throws Exception {
