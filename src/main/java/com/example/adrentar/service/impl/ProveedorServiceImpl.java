@@ -23,7 +23,10 @@ public class ProveedorServiceImpl implements ProveedorService {
     }
 
     @Override
-    public Proveedor crearProveedor(Proveedor proveedor) { return this.proveedorRepository.save(proveedor); }
+    public Proveedor crearProveedor(Proveedor proveedor) {
+        return this.proveedorRepository.save(proveedor);
+    }
+
 
     @Override
     public List<Proveedor> mostrarProveedores() {
@@ -43,11 +46,6 @@ public class ProveedorServiceImpl implements ProveedorService {
     }
 
     @Override
-    public Optional<Proveedor> buscarPorNombre(String nombre) {
-        return proveedorRepository.findByNombreCompleto(nombre);
-    }
-
-    @Override
     public Optional<Proveedor> buscarPorId(Long idProveedor) {
         return proveedorRepository.findById(idProveedor);
     }
@@ -57,7 +55,6 @@ public class ProveedorServiceImpl implements ProveedorService {
         Proveedor proveedorExistente = proveedorRepository.findById(idProveedor)
                 .orElseThrow(() -> new Exception("Proveedor no encontrado"));
 
-        proveedorExistente.setNombreCompleto(proveedor.getNombreCompleto());
         proveedorExistente.setTelefono(proveedor.getTelefono());
         proveedorExistente.setEmail(proveedor.getEmail());
         proveedorExistente.setEspecialidad(proveedor.getEspecialidad());

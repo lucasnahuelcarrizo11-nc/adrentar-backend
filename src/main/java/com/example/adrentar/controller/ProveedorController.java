@@ -33,11 +33,6 @@ public class ProveedorController {
         List<ProveedorConPromedioDTO> proveedores = proveedorServiceImpl.listarProveedoresConPromedio();
         return ResponseEntity.ok(proveedores);
     }
-    @GetMapping("/buscar/nombre/{nombre}")
-    public ResponseEntity <?> buscarPorNombre(@PathVariable String nombre) {
-        Optional<Proveedor> proveedor = proveedorServiceImpl.buscarPorNombre(nombre);
-        return proveedor.isPresent() ? ResponseEntity.ok(proveedor.get()) : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
-    }
 
     @GetMapping("/buscar/id/{idProveedor}")
     public ResponseEntity <?> buscarPorid(@PathVariable Long idProveedor ) {

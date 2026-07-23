@@ -9,21 +9,22 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Proveedor {
+public class Proveedor extends Usuario {
 
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idProveedor;
-
-    private String nombreCompleto;
-
-    private String telefono;
-    private String email;
     @Enumerated(EnumType.STRING)
     private Especialidad especialidad;
+
     private String descripcion;
     private String zona;
     private boolean activo = true;
+
+    public Long getIdProveedor() {
+        return getIdUsuario();
+    }
+
+    public void setIdProveedor(Long idProveedor) {
+        setIdUsuario(idProveedor);
+    }
 
 }

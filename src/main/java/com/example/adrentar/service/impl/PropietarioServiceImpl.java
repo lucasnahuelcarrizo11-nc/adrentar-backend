@@ -48,7 +48,6 @@ public class PropietarioServiceImpl implements PropietarioService {
         propietarioActual.setDni(propietario.getDni());
         propietarioActual.setTelefono(propietario.getTelefono());
         propietarioActual.setFechaNacimiento(propietario.getFechaNacimiento());
-        propietarioActual.setContrasenia(propietario.getContrasenia());
         return propietarioRepository.save(propietarioActual);
 
     }

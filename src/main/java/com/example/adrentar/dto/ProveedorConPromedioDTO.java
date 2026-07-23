@@ -9,7 +9,8 @@ import lombok.Data;
 public class ProveedorConPromedioDTO {
 
     private Long idProveedor;
-    private String nombreCompleto;
+    private String nombre;
+    private String apellido;
     private Especialidad especialidad;
     private String zona;
     private String telefono;
@@ -21,7 +22,8 @@ public class ProveedorConPromedioDTO {
 
     public ProveedorConPromedioDTO(Proveedor p, Double promedioPuntuacion, Long cantidadResenas) {
         this.idProveedor = p.getIdProveedor();
-        this.nombreCompleto = p.getNombreCompleto();
+        this.nombre = p.getNombre();
+        this.apellido = p.getApellido();
         this.especialidad = p.getEspecialidad();
         this.zona = p.getZona();
         this.telefono = p.getTelefono();

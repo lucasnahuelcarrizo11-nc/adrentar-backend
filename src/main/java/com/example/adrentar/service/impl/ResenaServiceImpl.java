@@ -38,7 +38,7 @@ public class ResenaServiceImpl implements ResenaService {
 
     @Override
     public List<Resena> listarPorProveedor(Long idProveedor) {
-        return resenaRepository.findByProveedor_IdProveedorOrderByFechaDesc(idProveedor);
+        return resenaRepository.findByProveedor_IdUsuarioOrderByFechaDesc(idProveedor);
     }
 
     @Override

@@ -15,7 +15,6 @@ public interface ProveedorService {
 
     List<Proveedor> mostrarProveedores();
 
-    Optional<Proveedor> buscarPorNombre(String nombre);
 
     Optional<Proveedor> buscarPorId(Long idProveedor);
 
