@@ -19,6 +19,8 @@ public class Proveedor extends Usuario {
     private String zona;
     private boolean activo = true;
 
+    private String matriculaUrl;
+
     public Long getIdProveedor() {
         return getIdUsuario();
     }

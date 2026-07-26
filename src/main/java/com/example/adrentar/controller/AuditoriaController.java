@@ -23,6 +23,8 @@ public class AuditoriaController {
     private AuditoriaService auditoriaService;
 
 
+
+
     @PostMapping("/alquiler/{alquilerId}")
     public ResponseEntity<AuditoriaDto> obtenerOCrear(
             @PathVariable Long alquilerId,

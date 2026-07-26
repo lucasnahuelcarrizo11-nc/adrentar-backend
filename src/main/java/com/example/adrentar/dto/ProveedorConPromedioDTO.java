@@ -19,6 +19,7 @@ public class ProveedorConPromedioDTO {
     private boolean activo;
     private Double promedioPuntuacion;
     private Long cantidadResenas;
+    private String matriculaUrl;
 
     public ProveedorConPromedioDTO(Proveedor p, Double promedioPuntuacion, Long cantidadResenas) {
         this.idProveedor = p.getIdProveedor();
@@ -32,5 +33,6 @@ public class ProveedorConPromedioDTO {
         this.activo = p.isActivo();
         this.promedioPuntuacion = promedioPuntuacion;
         this.cantidadResenas = cantidadResenas;
+        this.matriculaUrl = p.getMatriculaUrl();
     }
 }
