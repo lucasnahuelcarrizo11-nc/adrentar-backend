@@ -39,29 +39,48 @@ public class DocuSignAuthService {
         return accessToken;
     }
 
-    private void refreshToken() throws Exception {
-        // 1. Cargar clave privada — desde variable de entorno en prod, desde archivo en local
-        String keyContent;
-        String envKey = System.getenv("DOCUSIGN_PRIVATE_KEY");
+    /**
+     * Obtiene el contenido "crudo" del archivo .pem (con headers, saltos de línea,
+     * todo tal cual), sin importar si viene de una env var o de un archivo local.
+     *
+     * En producción (Render), DOCUSIGN_PRIVATE_KEY_B64 debe contener el archivo
+     * .pem ENTERO codificado en Base64 (generado con `base64 -w0 archivo.key`).
+     * Esto evita que Render corrompa guiones, saltos de línea o headers al
+     * guardar la variable de entorno.
+     *
+     * Si esa variable no está seteada, se mantiene compatibilidad hacia atrás
+     * con DOCUSIGN_PRIVATE_KEY (el PEM pegado directo) para no romper nada
+     * si todavía la tenés configurada así en algún entorno.
+     */
+    private String loadRawPemContent() throws Exception {
+        String envKeyB64 = System.getenv("DOCUSIGN_PRIVATE_KEY_B64");
 
-        if (envKey != null && !envKey.isBlank()) {
-            // Producción (Render): viene de variable de entorno
-            keyContent = envKey
-                    .replace("\\n", "\n")
-                    .replaceAll("-----BEGIN.*?-----", "")
-                    .replaceAll("-----END.*?-----", "");
-        } else {
-            // Local: viene del archivo
-            Resource resource = new ClassPathResource("docusign_private.key");
-            keyContent = new String(resource.getInputStream().readAllBytes())
-                    .replaceAll("-----BEGIN.*?-----", "")
-                    .replaceAll("-----END.*?-----", "");
+        if (envKeyB64 != null && !envKeyB64.isBlank()) {
+            byte[] decoded = Base64.getDecoder().decode(envKeyB64.trim());
+            return new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
         }
 
-        // Nos quedamos SOLO con caracteres válidos de base64. Esto elimina saltos de
-        // línea, espacios, puntos u otros caracteres residuales que puedan haberse
-        // colado al pegar/guardar la clave en la variable de entorno de Render.
-        keyContent = keyContent.replaceAll("[^A-Za-z0-9+/=]", "");
+        String envKeyRaw = System.getenv("DOCUSIGN_PRIVATE_KEY");
+        if (envKeyRaw != null && !envKeyRaw.isBlank()) {
+            System.out.println("=== ADVERTENCIA: usando DOCUSIGN_PRIVATE_KEY (formato legacy). "
+                    + "Se recomienda migrar a DOCUSIGN_PRIVATE_KEY_B64 para evitar corrupción. ===");
+            return envKeyRaw.replace("\\n", "\n");
+        }
+
+        // Local: viene del archivo
+        Resource resource = new ClassPathResource("docusign_private.key");
+        return new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private void refreshToken() throws Exception {
+        String rawPem = loadRawPemContent();
+
+        String keyContent = rawPem
+                .replaceAll("-----BEGIN.*?-----", "")
+                .replaceAll("-----END.*?-----", "")
+                // Nos quedamos SOLO con caracteres válidos de base64, por las dudas
+                // (saltos de línea, espacios u otros residuales).
+                .replaceAll("[^A-Za-z0-9+/=]", "");
 
         System.out.println("=== keyContent length: " + keyContent.length() + " ===");
 
@@ -79,15 +98,21 @@ public class DocuSignAuthService {
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
             privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
         } catch (Exception e) {
-            org.bouncycastle.asn1.pkcs.RSAPrivateKey rsaKey =
-                    org.bouncycastle.asn1.pkcs.RSAPrivateKey.getInstance(keyBytes);
-            RSAPrivateCrtKeySpec spec = new RSAPrivateCrtKeySpec(
-                    rsaKey.getModulus(), rsaKey.getPublicExponent(),
-                    rsaKey.getPrivateExponent(), rsaKey.getPrime1(),
-                    rsaKey.getPrime2(), rsaKey.getExponent1(),
-                    rsaKey.getExponent2(), rsaKey.getCoefficient()
-            );
-            privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
+            try {
+                org.bouncycastle.asn1.pkcs.RSAPrivateKey rsaKey =
+                        org.bouncycastle.asn1.pkcs.RSAPrivateKey.getInstance(keyBytes);
+                RSAPrivateCrtKeySpec spec = new RSAPrivateCrtKeySpec(
+                        rsaKey.getModulus(), rsaKey.getPublicExponent(),
+                        rsaKey.getPrivateExponent(), rsaKey.getPrime1(),
+                        rsaKey.getPrime2(), rsaKey.getExponent1(),
+                        rsaKey.getExponent2(), rsaKey.getCoefficient()
+                );
+                privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
+            } catch (Exception e2) {
+                System.out.println("=== No se pudo parsear la clave privada ni como PKCS8 ni como PKCS1. "
+                        + "keyContent length: " + keyContent.length() + " ===");
+                throw e2;
+            }
         }
 
         // 2. Construir el JWT
@@ -131,6 +156,5 @@ public class DocuSignAuthService {
             System.out.println("=== Error al obtener token: " + e.getResponseBodyAsString() + " ===");
             throw e;
         }
-
     }
 }
