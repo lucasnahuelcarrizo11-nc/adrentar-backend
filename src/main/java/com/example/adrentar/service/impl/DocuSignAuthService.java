@@ -41,34 +41,43 @@ public class DocuSignAuthService {
 
     /**
      * Obtiene el contenido "crudo" del archivo .pem (con headers, saltos de línea,
-     * todo tal cual), sin importar si viene de una env var o de un archivo local.
+     * todo tal cual), probando en este orden:
      *
-     * En producción (Render), DOCUSIGN_PRIVATE_KEY_B64 debe contener el archivo
-     * .pem ENTERO codificado en Base64 (generado con `base64 -w0 archivo.key`).
-     * Esto evita que Render corrompa guiones, saltos de línea o headers al
-     * guardar la variable de entorno.
-     *
-     * Si esa variable no está seteada, se mantiene compatibilidad hacia atrás
-     * con DOCUSIGN_PRIVATE_KEY (el PEM pegado directo) para no romper nada
-     * si todavía la tenés configurada así en algún entorno.
+     * 1. Secret File de Render en /etc/secrets/docusign_private.key — el archivo
+     *    se sube tal cual en el dashboard de Render (sección "Secret Files"), sin
+     *    ninguna codificación de por medio, así que no hay riesgo de corrupción
+     *    al copiar/pegar. ESTE ES EL MÉTODO RECOMENDADO para producción.
+     * 2. DOCUSIGN_PRIVATE_KEY_B64 (legacy) — el .pem completo en Base64 dentro de
+     *    una env var.
+     * 3. DOCUSIGN_PRIVATE_KEY (legacy) — el .pem pegado directo en una env var.
+     * 4. Archivo local docusign_private.key en el classpath (para desarrollo).
      */
     private String loadRawPemContent() throws Exception {
-        String envKeyB64 = System.getenv("DOCUSIGN_PRIVATE_KEY_B64");
+        java.io.File secretFile = new java.io.File("/etc/secrets/docusign_private.key");
+        if (secretFile.exists()) {
+            byte[] bytes = java.nio.file.Files.readAllBytes(secretFile.toPath());
+            System.out.println("=== Clave cargada desde Secret File de Render ===");
+            return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        }
 
+        String envKeyB64 = System.getenv("DOCUSIGN_PRIVATE_KEY_B64");
         if (envKeyB64 != null && !envKeyB64.isBlank()) {
+            System.out.println("=== ADVERTENCIA: usando DOCUSIGN_PRIVATE_KEY_B64 (legacy). "
+                    + "Se recomienda migrar a un Secret File en Render. ===");
             byte[] decoded = Base64.getDecoder().decode(envKeyB64.trim());
             return new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
         }
 
         String envKeyRaw = System.getenv("DOCUSIGN_PRIVATE_KEY");
         if (envKeyRaw != null && !envKeyRaw.isBlank()) {
-            System.out.println("=== ADVERTENCIA: usando DOCUSIGN_PRIVATE_KEY (formato legacy). "
-                    + "Se recomienda migrar a DOCUSIGN_PRIVATE_KEY_B64 para evitar corrupción. ===");
+            System.out.println("=== ADVERTENCIA: usando DOCUSIGN_PRIVATE_KEY (legacy). "
+                    + "Se recomienda migrar a un Secret File en Render. ===");
             return envKeyRaw.replace("\\n", "\n");
         }
 
         // Local: viene del archivo
         Resource resource = new ClassPathResource("docusign_private.key");
+        System.out.println("=== Clave cargada desde archivo local (classpath) ===");
         return new String(resource.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
     }
 
