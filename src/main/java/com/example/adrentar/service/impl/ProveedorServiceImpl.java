@@ -5,6 +5,7 @@ import com.example.adrentar.entity.Proveedor;
 import com.example.adrentar.repository.ProveedorRepository;
 import com.example.adrentar.repository.ResenaRepository;
 import com.example.adrentar.service.ProveedorService;
+import com.example.adrentar.service.SuscripcionService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,15 +17,20 @@ public class ProveedorServiceImpl implements ProveedorService {
 
     private final ProveedorRepository proveedorRepository;
     private final ResenaRepository resenaRepository;
+    private final SuscripcionService suscripcionService;
 
-    public ProveedorServiceImpl(ProveedorRepository proveedorRepository, ResenaRepository resenaRepository) {
+    public ProveedorServiceImpl(ProveedorRepository proveedorRepository, ResenaRepository resenaRepository,
+                                SuscripcionService suscripcionService) {
         this.proveedorRepository = proveedorRepository;
         this.resenaRepository = resenaRepository;
+        this.suscripcionService = suscripcionService;
     }
 
     @Override
     public Proveedor crearProveedor(Proveedor proveedor) {
-        return this.proveedorRepository.save(proveedor);
+        Proveedor guardado = this.proveedorRepository.save(proveedor);
+        suscripcionService.iniciarTrial(guardado); // arranca el trial de 30 días
+        return guardado;
     }
 
 

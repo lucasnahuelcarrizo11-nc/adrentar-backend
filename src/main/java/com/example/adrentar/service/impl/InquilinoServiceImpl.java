@@ -3,6 +3,7 @@ package com.example.adrentar.service.impl;
 import com.example.adrentar.entity.Inquilino;
 import com.example.adrentar.repository.InquilinoRepository;
 import com.example.adrentar.service.InquilinoService;
+import com.example.adrentar.service.SuscripcionService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,14 +12,20 @@ import java.util.Optional;
 @Service
 public class InquilinoServiceImpl implements InquilinoService {
 
-    private InquilinoRepository inquilinoRepository;
+    private final InquilinoRepository inquilinoRepository;
+    private final SuscripcionService suscripcionService;
 
-    public InquilinoServiceImpl(InquilinoRepository inquilinoRepository) {
+    public InquilinoServiceImpl(InquilinoRepository inquilinoRepository, SuscripcionService suscripcionService) {
         this.inquilinoRepository = inquilinoRepository;
+        this.suscripcionService = suscripcionService;
     }
 
     @Override
-    public Inquilino crearInquilino(Inquilino inquilino) {return inquilinoRepository.save(inquilino);}
+    public Inquilino crearInquilino(Inquilino inquilino) {
+        Inquilino guardado = inquilinoRepository.save(inquilino);
+        suscripcionService.iniciarTrial(guardado); // arranca el trial de 30 días
+        return guardado;
+    }
 
     @Override
     public List<Inquilino> listarInquilinos() {return inquilinoRepository.findAll();}
@@ -54,6 +61,6 @@ public class InquilinoServiceImpl implements InquilinoService {
 
     @Override
     public void eliminarInquilino(Long idInquilino) throws Exception {
-     inquilinoRepository.deleteById(idInquilino);
+        inquilinoRepository.deleteById(idInquilino);
     }
 }
