@@ -23,4 +23,6 @@ public interface SuscripcionService {
     void procesarWebhookPreapproval(String preapprovalId) throws Exception;
 
     void cancelarSuscripcion(Long idUsuario) throws Exception;
+
+    void sincronizarEstadoSuscripcion(Long idUsuario) throws Exception;
 }

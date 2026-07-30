@@ -138,6 +138,14 @@ public class SuscripcionServiceImpl implements SuscripcionService {
 
         try {
             preapproval = client.create(request);
+
+            System.out.println("================================");
+            System.out.println("PREAPPROVAL CREADA");
+            System.out.println("ID: " + preapproval.getId());
+            System.out.println("STATUS: " + preapproval.getStatus());
+            System.out.println("INIT POINT: " + preapproval.getInitPoint());
+            System.out.println("================================");
+
         } catch (com.mercadopago.exceptions.MPApiException e) {
             System.out.println("❌ ERROR MERCADO PAGO (preapproval)");
             System.out.println("STATUS CODE: " + e.getStatusCode());
@@ -154,31 +162,69 @@ public class SuscripcionServiceImpl implements SuscripcionService {
 
     @Override
     public void procesarWebhookPreapproval(String preapprovalId) throws Exception {
+
+        System.out.println("========================================");
+        System.out.println("Entró a procesarWebhookPreapproval()");
+        System.out.println("Preapproval recibido: " + preapprovalId);
+
         PreapprovalClient client = new PreapprovalClient();
+
+        System.out.println("Consultando Mercado Pago...");
+
         Preapproval preapproval = client.get(preapprovalId);
 
-        Suscripcion suscripcion = suscripcionRepository.findByPreapprovalId(preapprovalId)
-                .orElseThrow(() -> new RuntimeException(
-                        "No se encontró una suscripción local con preapprovalId: " + preapprovalId));
+        System.out.println("Respuesta obtenida.");
 
-        String status = preapproval.getStatus(); // "authorized", "paused", "cancelled"
+        System.out.println("ID: " + preapproval.getId());
+        System.out.println("STATUS: " + preapproval.getStatus());
+
+        Suscripcion suscripcion = suscripcionRepository
+                .findByPreapprovalId(preapprovalId)
+                .orElseThrow(() -> new RuntimeException(
+                        "No existe una suscripción con ese preapprovalId"));
+
+        System.out.println("Suscripción encontrada en BD.");
+        System.out.println("Estado actual: " + suscripcion.getEstado());
+
+        String status = preapproval.getStatus();
 
         switch (status) {
+
             case "authorized":
+
+                System.out.println("Estado AUTHORIZED");
+
                 suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
                 suscripcion.setFechaProximoPago(LocalDate.now().plusMonths(1));
                 break;
-            case "cancelled":
-                suscripcion.setEstado(EstadoSuscripcion.CANCELADA);
-                break;
+
             case "paused":
+
+                System.out.println("Estado PAUSED");
+
                 suscripcion.setEstado(EstadoSuscripcion.VENCIDA);
                 break;
+
+            case "cancelled":
+
+                System.out.println("Estado CANCELLED");
+
+                suscripcion.setEstado(EstadoSuscripcion.CANCELADA);
+                break;
+
             default:
-                System.out.println("Estado de preapproval no manejado: " + status);
+
+                System.out.println("Estado NO MANEJADO: " + status);
+                break;
         }
 
+        System.out.println("Guardando en BD...");
+
         suscripcionRepository.save(suscripcion);
+
+        System.out.println("Guardado correctamente.");
+
+        System.out.println("========================================");
     }
 
     @Override
@@ -196,5 +242,19 @@ public class SuscripcionServiceImpl implements SuscripcionService {
 
         suscripcion.setEstado(EstadoSuscripcion.CANCELADA);
         suscripcionRepository.save(suscripcion);
+    }
+
+    @Override
+    public void sincronizarEstadoSuscripcion(Long idUsuario) throws Exception {
+
+        Suscripcion suscripcion = suscripcionRepository
+                .findByUsuario_IdUsuario(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Suscripción no encontrada"));
+
+        if (suscripcion.getPreapprovalId() == null) {
+            return;
+        }
+
+        procesarWebhookPreapproval(suscripcion.getPreapprovalId());
     }
 }
