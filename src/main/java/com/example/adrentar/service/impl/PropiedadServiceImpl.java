@@ -93,4 +93,8 @@ private PropiedadRepository propiedadRepository;
     public List<Propiedad> listarPropiedadesPorPropietario(Long propietarioId) {
         return propiedadRepository.findByPropietarioIdUsuario(propietarioId);
     }
+
+    public List<Propiedad> listarTodas() {
+        return propiedadRepository.findAll();
+    }
 }

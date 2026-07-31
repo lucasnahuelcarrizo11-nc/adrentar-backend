@@ -20,4 +20,6 @@ public interface PropiedadService {
     List<Propiedad> listarPropiedadesPorPropietario(Long propietarioId);
 
     void eliminarPropiedad(Long idPropiedad);
+
+    List<Propiedad> listarTodas();
 }

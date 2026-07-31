@@ -10,4 +10,8 @@ import java.util.List;
 public interface ReporteRepository extends JpaRepository<Reporte, Long> {
 
     List<Reporte> findByAlquilerIdAlquilerOrderByFechaCreacionDesc(Long idAlquiler);
+
+    long countByAlquilerIdAlquiler(Long idAlquiler);
+
+
 }

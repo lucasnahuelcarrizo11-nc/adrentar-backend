@@ -100,4 +100,9 @@ public class PropiedadController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Propiedad no encontrada");
         }
     }
+
+    @GetMapping("/listarTodas")
+    public ResponseEntity<List<Propiedad>> listarTodas() {
+        return ResponseEntity.ok(propiedadService.listarTodas());
+    }
 }

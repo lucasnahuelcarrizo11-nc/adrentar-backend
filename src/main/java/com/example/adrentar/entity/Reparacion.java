@@ -22,12 +22,17 @@ public class Reparacion {
     @JoinColumn(name = "id_proveedor")
     private Proveedor proveedor;
 
+    @ManyToOne
+    @JoinColumn(name = "id_propiedad")
+    private Propiedad propiedad;
+
     // Opcional: ayuda a identificar la reparación de un vistazo en el listado.
-    // Si no lo querés, se puede sacar sin afectar el resto.
     private String titulo;
 
     @Column(length = 2000)
     private String descripcion;
+
+    private Double monto;
 
     private LocalDateTime fecha;
 

@@ -1,7 +1,10 @@
 package com.example.adrentar.service.impl;
 
+import com.example.adrentar.dto.GastoPropiedadDto;
+import com.example.adrentar.entity.Propiedad;
 import com.example.adrentar.entity.Proveedor;
 import com.example.adrentar.entity.Reparacion;
+import com.example.adrentar.repository.PropiedadRepository;
 import com.example.adrentar.repository.ProveedorRepository;
 import com.example.adrentar.repository.ReparacionRepository;
 import com.example.adrentar.service.ReparacionService;
@@ -20,8 +23,6 @@ import java.util.UUID;
 @Service
 public class ReparacionServiceImpl implements ReparacionService {
 
-
-
     private static final String CARPETA_REPARACIONES = "uploads/reparaciones";
 
     @Autowired
@@ -30,21 +31,37 @@ public class ReparacionServiceImpl implements ReparacionService {
     @Autowired
     private ProveedorRepository proveedorRepository;
 
+    @Autowired
+    private PropiedadRepository propiedadRepository;
+
+    @Override
     public List<Reparacion> listarPorProveedor(Long idProveedor) {
         return reparacionRepository.findByProveedorIdUsuarioOrderByFechaDesc(idProveedor);
     }
 
-    public Reparacion crearReparacion(Long idProveedor, String titulo, String descripcion, MultipartFile[] imagenes) throws IOException {
+    @Override
+    public Reparacion crearReparacion(Long idProveedor, Long idPropiedad, String titulo, String descripcion,
+                                      Double monto, MultipartFile[] imagenes) throws IOException {
         Proveedor proveedor = proveedorRepository.findById(idProveedor)
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
 
+        Propiedad propiedad = propiedadRepository.findById(idPropiedad)
+                .orElseThrow(() -> new RuntimeException("Propiedad no encontrada"));
+
         Reparacion reparacion = new Reparacion();
         reparacion.setProveedor(proveedor);
+        reparacion.setPropiedad(propiedad);
         reparacion.setTitulo(titulo);
         reparacion.setDescripcion(descripcion);
+        reparacion.setMonto(monto);
         reparacion.setImagenes(guardarImagenes(imagenes));
 
         return reparacionRepository.save(reparacion);
+    }
+
+    @Override
+    public List<GastoPropiedadDto> resumenGastos(Long idPropietario, Integer anio, Integer mes) {
+        return reparacionRepository.resumenGastosPorPropietario(idPropietario, anio, mes);
     }
 
     public List<String> guardarImagenes(MultipartFile[] imagenes) throws IOException {

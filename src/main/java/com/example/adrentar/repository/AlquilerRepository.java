@@ -11,4 +11,6 @@ public interface AlquilerRepository extends JpaRepository<Alquiler,Long> {
 
     List<Alquiler> findByPropietarioIdUsuario(Long idPropietario);
     List<Alquiler> findByInquilinoIdUsuario(Long idInquilino);
+
+
 }
