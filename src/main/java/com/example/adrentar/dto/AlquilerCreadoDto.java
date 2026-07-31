@@ -13,4 +13,5 @@ public class AlquilerCreadoDto {
     private String fechaInicio;
     private String fechaFin;
     private Double precio;
+    private Double porcentajeAumento;
 }

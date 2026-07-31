@@ -11,4 +11,5 @@ public class PagoDto {
     private int mes;
     private int anio;
     private String estado;
+    private Double monto;
 }

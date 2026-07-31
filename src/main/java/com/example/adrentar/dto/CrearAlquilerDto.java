@@ -11,4 +11,7 @@ public class CrearAlquilerDto {
     private Date fechaFin;
     private Long idPropiedad;
     private String emailInquilino;
+
+    /** Porcentaje de aumento cada 4 meses. Opcional, null/0 = sin aumento */
+    private Double porcentajeAumento;
 }

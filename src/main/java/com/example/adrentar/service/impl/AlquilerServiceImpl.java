@@ -64,6 +64,10 @@ public class AlquilerServiceImpl implements AlquilerService {
         Inquilino inquilino = inquilinoRepository.findByEmail(dto.getEmailInquilino())
                 .orElseThrow(() -> new RuntimeException("Inquilino no encontrado"));
 
+        if (dto.getPorcentajeAumento() != null && dto.getPorcentajeAumento() < 0) {
+            throw new RuntimeException("El porcentaje de aumento no puede ser negativo");
+        }
+
         Alquiler alquiler = new Alquiler();
         alquiler.setPrecio(dto.getPrecio());
         alquiler.setFechaInicio(dto.getFechaInicio());
@@ -72,6 +76,7 @@ public class AlquilerServiceImpl implements AlquilerService {
         alquiler.setPropiedad(propiedad);
         alquiler.setInquilino(inquilino);
         alquiler.setEstado("PENDIENTE");
+        alquiler.setPorcentajeAumento(dto.getPorcentajeAumento());
 
         alquilerRepository.save(alquiler);
 
@@ -92,12 +97,13 @@ public class AlquilerServiceImpl implements AlquilerService {
                 propiedad.getDireccion(),
                 dto.getFechaInicio().toString(),
                 dto.getFechaFin().toString(),
-                dto.getPrecio()
+                dto.getPrecio(),
+                dto.getPorcentajeAumento()
         );
     }
 
     /* ===============================
-       LISTAR MIS ALQUILERES (FIX)
+       LISTAR MIS ALQUILERES
     ================================ */
     @Override
     public List<AlquilerListadoDto> obtenerMisAlquileres(String token) {
@@ -124,11 +130,13 @@ public class AlquilerServiceImpl implements AlquilerService {
 
             dto.setIdAlquiler(a.getIdAlquiler());
             dto.setPrecio(a.getPrecio());
+            dto.setPrecioActual(a.getPrecioActual());
+            dto.setPorcentajeAumento(a.getPorcentajeAumento());
             dto.setFechaInicio(a.getFechaInicio());
             dto.setFechaFin(a.getFechaFin());
             dto.setEstado(a.getEstado());
             dto.setEmailInquilino(a.getInquilino().getEmail());
-            dto.setEnvelopeId(a.getEnvelopeId()); // ← agregar esto
+            dto.setEnvelopeId(a.getEnvelopeId());
 
             dto.setDireccionPropiedad(
                     a.getPropiedad().getDireccion()
@@ -204,9 +212,10 @@ public class AlquilerServiceImpl implements AlquilerService {
                         + " Rechazo el alquiler de " + alquiler.getPropiedad().getDireccion()
         );
     }
+
     /* ===============================
-   CANCELAR ALQUILER
-================================ */
+       CANCELAR ALQUILER
+    ================================ */
     @Override
     public void cancelarAlquiler(String token, Long idAlquiler) {
 
@@ -218,7 +227,6 @@ public class AlquilerServiceImpl implements AlquilerService {
         Alquiler alquiler = alquilerRepository.findById(idAlquiler)
                 .orElseThrow(() -> new RuntimeException("Alquiler no encontrado"));
 
-        // Tanto inquilino como propietario pueden cancelar, pero solo el suyo
         if (usuario instanceof Inquilino i) {
             if (!alquiler.getInquilino().getIdUsuario().equals(i.getIdUsuario())) {
                 throw new RuntimeException("No tenés permiso para cancelar este alquiler");
@@ -238,16 +246,13 @@ public class AlquilerServiceImpl implements AlquilerService {
         alquiler.setEstado("CANCELADO");
         alquilerRepository.save(alquiler);
 
-        // Notificar a la otra parte
         String mensajeNoti;
         String emailDestino;
 
         if (usuario instanceof Inquilino) {
-            // Canceló el inquilino → notificar al propietario
             mensajeNoti = "El inquilino canceló el alquiler de " + alquiler.getPropiedad().getDireccion();
             emailDestino = alquiler.getPropietario().getEmail();
         } else {
-            // Canceló el propietario → notificar al inquilino
             mensajeNoti = "El propietario canceló el alquiler de " + alquiler.getPropiedad().getDireccion();
 
             Notificacion noti = new Notificacion();

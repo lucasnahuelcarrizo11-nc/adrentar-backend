@@ -21,6 +21,8 @@ public class AlquilerListadoDto {
     private Date fechaFin;
     private String estado;
     private double precio;
+    private double precioActual;
+    private Double porcentajeAumento;
 
     private String envelopeId;
 }

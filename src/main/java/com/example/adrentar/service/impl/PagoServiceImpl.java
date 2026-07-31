@@ -22,6 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -62,8 +65,9 @@ public class PagoServiceImpl implements PagoService {
         }
 
         // 🔥 SI NO EXISTE, CREAR NUEVO PAGO
-
-        BigDecimal monto = BigDecimal.valueOf(alquiler.getPrecio());
+        // Calculamos el monto correspondiente a ESE mes/año puntual,
+        // aplicando el aumento por porcentaje si ya corresponde a esa altura del contrato.
+        BigDecimal monto = calcularMontoParaMes(alquiler, mes, anio);
 
         String externalReference = idAlquiler + "-" + mes + "-" + anio;
 
@@ -101,7 +105,7 @@ public class PagoServiceImpl implements PagoService {
         pago.setAlquiler(alquiler);
         pago.setMes(mes);
         pago.setAnio(anio);
-        pago.setMonto(alquiler.getPrecio());
+        pago.setMonto(monto.doubleValue());
         pago.setEstadoPago(EstadoPago.PENDIENTE);
         pago.setPreferenceId(preference.getId());
         pago.setExternalReference(externalReference);
@@ -111,13 +115,31 @@ public class PagoServiceImpl implements PagoService {
 
         return preference.getInitPoint();
     }
+
+    /**
+     * Calcula el monto que corresponde cobrar para un mes/año puntual del
+     * alquiler, aplicando el porcentaje de aumento cada 4 meses (si existe).
+     */
+    private BigDecimal calcularMontoParaMes(Alquiler alquiler, int mes, int anio) {
+        Date fechaReferencia = Date.from(
+                LocalDate.of(anio, mes, 1)
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+        );
+
+        double montoCalculado = alquiler.calcularPrecioEnFecha(fechaReferencia);
+
+        return BigDecimal.valueOf(montoCalculado).setScale(2, RoundingMode.HALF_UP);
+    }
+
     public List<PagoDto> obtenerPagosPorAlquiler(Long idAlquiler) {
         return pagoRepository.findByAlquilerIdAlquiler(idAlquiler)
                 .stream()
                 .map(p -> new PagoDto(
                         p.getMes(),
                         p.getAnio(),
-                        p.getEstadoPago().name() // 🔥 CLAVE
+                        p.getEstadoPago().name(),
+                        p.getMonto()
                 ))
                 .toList();
     }
