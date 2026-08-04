@@ -16,6 +16,7 @@ public class Proveedor extends Usuario {
     private Especialidad especialidad;
 
     private String descripcion;
+
     private String zona;
     private boolean activo = true;
 

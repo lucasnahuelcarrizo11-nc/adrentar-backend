@@ -3,6 +3,7 @@ package com.example.adrentar.controller;
 
 import com.example.adrentar.dto.AlquilerCreadoDto;
 import com.example.adrentar.dto.CrearAlquilerDto;
+import com.example.adrentar.dto.EditarAlquilerDto;
 import com.example.adrentar.service.impl.AlquilerServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,19 @@ public class AlquilerController {
 
         alquilerService.aceptarAlquiler(token, id);
         return ResponseEntity.ok("Alquiler aceptado");
+    }
+
+    @PutMapping("/{id}/editar")
+    public ResponseEntity<?> editar(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long id,
+            @RequestBody EditarAlquilerDto dto) {
+
+        try {
+            return ResponseEntity.ok(alquilerService.editarAlquiler(token, id, dto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}/rechazar")

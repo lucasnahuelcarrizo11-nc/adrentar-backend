@@ -3,6 +3,7 @@ package com.example.adrentar.service.impl;
 import com.example.adrentar.dto.AlquilerCreadoDto;
 import com.example.adrentar.dto.AlquilerListadoDto;
 import com.example.adrentar.dto.CrearAlquilerDto;
+import com.example.adrentar.dto.EditarAlquilerDto;
 import com.example.adrentar.entity.*;
 import com.example.adrentar.repository.*;
 import com.example.adrentar.service.AlquilerService;
@@ -185,6 +186,63 @@ public class AlquilerServiceImpl implements AlquilerService {
         );
     }
 
+    @Override
+    public AlquilerListadoDto editarAlquiler(String token, Long idAlquiler, EditarAlquilerDto dto) {
+
+        String tokenLimpio = token.replace("Bearer ", "").trim();
+
+        Usuario usuario = usuarioService.getUsuarioPorToken(tokenLimpio)
+                .orElseThrow(() -> new RuntimeException("Token inválido"));
+
+        if (!(usuario instanceof Propietario propietario)) {
+            throw new RuntimeException("Solo un propietario puede editar alquileres");
+        }
+
+        Alquiler alquiler = alquilerRepository.findById(idAlquiler)
+                .orElseThrow(() -> new RuntimeException("Alquiler no encontrado"));
+
+        if (!alquiler.getPropietario().getIdUsuario().equals(propietario.getIdUsuario())) {
+            throw new RuntimeException("No tenés permiso para editar este alquiler");
+        }
+
+        if (!"PENDIENTE".equals(alquiler.getEstado())) {
+            throw new RuntimeException("Solo se puede editar un alquiler mientras está pendiente de aceptación");
+        }
+
+        if (dto.getPorcentajeAumento() != null && dto.getPorcentajeAumento() < 0) {
+            throw new RuntimeException("El porcentaje de aumento no puede ser negativo");
+        }
+
+        if (dto.getPrecio() != null) alquiler.setPrecio(dto.getPrecio());
+        if (dto.getFechaInicio() != null) alquiler.setFechaInicio(dto.getFechaInicio());
+        if (dto.getFechaFin() != null) alquiler.setFechaFin(dto.getFechaFin());
+        if (dto.getPorcentajeAumento() != null) alquiler.setPorcentajeAumento(dto.getPorcentajeAumento());
+
+        alquilerRepository.save(alquiler);
+
+        notificacionServiceImpl.notificarInquilino(
+                alquiler.getInquilino(),
+                "El propietario modificó los términos del alquiler de " + alquiler.getPropiedad().getDireccion()
+        );
+
+        AlquilerListadoDto resultado = new AlquilerListadoDto();
+        resultado.setIdAlquiler(alquiler.getIdAlquiler());
+        resultado.setPrecio(alquiler.getPrecio());
+        resultado.setPrecioActual(alquiler.getPrecioActual());
+        resultado.setPorcentajeAumento(alquiler.getPorcentajeAumento());
+        resultado.setFechaInicio(alquiler.getFechaInicio());
+        resultado.setFechaFin(alquiler.getFechaFin());
+        resultado.setEstado(alquiler.getEstado());
+        resultado.setEmailInquilino(alquiler.getInquilino().getEmail());
+        resultado.setEnvelopeId(alquiler.getEnvelopeId());
+        resultado.setDireccionPropiedad(alquiler.getPropiedad().getDireccion());
+        resultado.setNombreInquilino(alquiler.getInquilino().getNombre());
+        resultado.setApellidoInquilino(alquiler.getInquilino().getApellido());
+        resultado.setApellidoPropietario(alquiler.getPropietario().getApellido());
+        resultado.setNombrePropietario(alquiler.getPropietario().getNombre());
+
+        return resultado;
+    }
     /* ===============================
        RECHAZAR ALQUILER
     ================================ */
