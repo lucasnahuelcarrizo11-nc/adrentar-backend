@@ -177,14 +177,21 @@ public class AlquilerServiceImpl implements AlquilerService {
                 .orElseThrow(() -> new RuntimeException("Alquiler no encontrado"));
 
         alquiler.setEstado("ACEPTADO");
+
+        Propiedad propiedad = alquiler.getPropiedad();
+        propiedad.setEstado("NO_DISPONIBLE");
+
+        propiedadRepository.save(propiedad);
         alquilerRepository.save(alquiler);
 
         notificacionServiceImpl.notificarPropietario(
                 alquiler.getPropietario(),
                 "El inquilino " + alquiler.getInquilino().getNombre()
-                        + " aceptó el alquiler de " + alquiler.getPropiedad().getDireccion()
+                        + " aceptó el alquiler de "
+                        + alquiler.getPropiedad().getDireccion()
         );
     }
+
 
     @Override
     public AlquilerListadoDto editarAlquiler(String token, Long idAlquiler, EditarAlquilerDto dto) {
@@ -302,7 +309,13 @@ public class AlquilerServiceImpl implements AlquilerService {
         }
 
         alquiler.setEstado("CANCELADO");
+
+        Propiedad propiedad = alquiler.getPropiedad();
+        propiedad.setEstado("DISPONIBLE");
+
+        propiedadRepository.save(propiedad);
         alquilerRepository.save(alquiler);
+
 
         String mensajeNoti;
         String emailDestino;
